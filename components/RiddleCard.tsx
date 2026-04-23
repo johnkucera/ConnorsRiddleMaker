@@ -82,7 +82,7 @@ export default function RiddleCard({ riddle, onFavorite, isFavorite }: Props) {
               <Text style={styles.badgeText}>{riddle.difficulty}</Text>
             </View>
           </View>
-          <Text style={styles.emoji}>{riddle.emoji}</Text>
+          <Text style={styles.questionMark}>❓</Text>
           <Text style={styles.question}>{riddle.question}</Text>
 
           {/* Hints */}
@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textTransform: 'capitalize',
   },
-  emoji: {
+  questionMark: {
     fontSize: 48,
     textAlign: 'center',
     marginVertical: 8,
