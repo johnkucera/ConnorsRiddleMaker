@@ -4,6 +4,7 @@ import RiddleCard from '../../components/RiddleCard';
 import { useRiddles } from '../../hooks/useRiddles';
 import { useFavorites } from '../../hooks/useFavorites';
 import { useStreak } from '../../hooks/useStreak';
+import { Riddle } from '../../constants/types';
 
 export default function HomeScreen() {
   const { getDailyRiddle, getRandomRiddle, totalCount } = useRiddles();
@@ -11,19 +12,28 @@ export default function HomeScreen() {
   const { streak, recordToday } = useStreak();
 
   const dailyRiddle = getDailyRiddle();
-  const [randomRiddle, setRandomRiddle] = useState(() => getRandomRiddle([dailyRiddle.id]));
-  const [showDaily, setShowDaily] = useState(true);
-  const [seenIds, setSeenIds] = useState<string[]>([dailyRiddle.id]);
+  const [history, setHistory] = useState<Riddle[]>([dailyRiddle]);
+  const [historyIndex, setHistoryIndex] = useState(0);
 
-  const currentRiddle = showDaily ? dailyRiddle : randomRiddle;
+  const currentRiddle = history[historyIndex];
+  const canGoBack = historyIndex > 0;
 
   const nextRiddle = useCallback(() => {
     recordToday();
+    const seenIds = history.map(r => r.id);
     const next = getRandomRiddle(seenIds);
-    setSeenIds(prev => [...prev, next.id]);
-    setRandomRiddle(next);
-    setShowDaily(false);
-  }, [getRandomRiddle, seenIds, recordToday]);
+
+    // If we're in the middle of history, truncate forward and add new
+    const newHistory = [...history.slice(0, historyIndex + 1), next];
+    setHistory(newHistory);
+    setHistoryIndex(newHistory.length - 1);
+  }, [getRandomRiddle, history, historyIndex, recordToday]);
+
+  const prevRiddle = useCallback(() => {
+    if (canGoBack) setHistoryIndex(i => i - 1);
+  }, [canGoBack]);
+
+  const isFirst = historyIndex === 0;
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -36,7 +46,7 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {showDaily && (
+      {isFirst && (
         <View style={styles.dailyBadge}>
           <Text style={styles.dailyText}>⭐ Today's Riddle</Text>
         </View>
@@ -49,9 +59,17 @@ export default function HomeScreen() {
         isFavorite={isFavorite(currentRiddle.id)}
       />
 
+      {/* Next button */}
       <Pressable style={styles.nextBtn} onPress={nextRiddle}>
         <Text style={styles.nextBtnText}>Next Riddle 🎲</Text>
       </Pressable>
+
+      {/* Previous button */}
+      {canGoBack && (
+        <Pressable style={styles.prevBtn} onPress={prevRiddle}>
+          <Text style={styles.prevBtnText}>← Previous Riddle</Text>
+        </Pressable>
+      )}
 
       <Text style={styles.counter}>{totalCount} riddles loaded</Text>
     </ScrollView>
@@ -95,7 +113,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     paddingHorizontal: 32,
     paddingVertical: 14,
-    marginTop: 16,
+    marginTop: 20,
     shadowColor: '#7C3AED',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -103,5 +121,16 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   nextBtnText: { color: '#FFF', fontSize: 18, fontWeight: '800' },
-  counter: { textAlign: 'center', color: '#9CA3AF', fontSize: 12, marginTop: 12 },
+  prevBtn: {
+    alignSelf: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    marginTop: 16,
+  },
+  prevBtnText: {
+    color: '#9CA3AF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  counter: { textAlign: 'center', color: '#9CA3AF', fontSize: 12, marginTop: 16 },
 });

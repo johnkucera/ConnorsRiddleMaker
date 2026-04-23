@@ -78,6 +78,14 @@ export default function RiddleCard({ riddle, onFavorite, isFavorite }: Props) {
             <View style={[styles.badge, { backgroundColor: accentColor }]}>
               <Text style={styles.badgeText}>{riddle.category}</Text>
             </View>
+            {onFavorite && (
+              <Pressable
+                onPress={(e) => { e.stopPropagation(); onFavorite(); }}
+                hitSlop={12}
+              >
+                <Text style={styles.heart}>{isFavorite ? '❤️' : '🤍'}</Text>
+              </Pressable>
+            )}
             <View style={[styles.badge, { backgroundColor: diffColor }]}>
               <Text style={styles.badgeText}>{riddle.difficulty}</Text>
             </View>
@@ -113,18 +121,23 @@ export default function RiddleCard({ riddle, onFavorite, isFavorite }: Props) {
 
         {/* Back — Answer */}
         <Animated.View style={[styles.card, styles.cardBack, { borderColor: accentColor, backgroundColor: accentColor }, backStyle]}>
+          <View style={styles.backTopRow}>
+            {onFavorite && (
+              <Pressable
+                onPress={(e) => { e.stopPropagation(); onFavorite(); }}
+                hitSlop={12}
+                style={styles.backHeart}
+              >
+                <Text style={styles.heart}>{isFavorite ? '❤️' : '🤍'}</Text>
+              </Pressable>
+            )}
+          </View>
           <Text style={styles.answerLabel}>Answer</Text>
           <Text style={styles.answerEmoji}>{riddle.emoji}</Text>
           <Text style={styles.answer}>{riddle.answer}</Text>
           <Text style={styles.tapHintBack}>Tap to flip back</Text>
         </Animated.View>
       </Pressable>
-
-      {onFavorite && (
-        <Pressable style={styles.heartBtn} onPress={onFavorite}>
-          <Text style={styles.heart}>{isFavorite ? '❤️' : '🤍'}</Text>
-        </Pressable>
-      )}
     </View>
   );
 }
@@ -154,7 +167,16 @@ const styles = StyleSheet.create({
   topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 12,
+  },
+  backTopRow: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+  },
+  backHeart: {
+    padding: 4,
   },
   badge: {
     paddingHorizontal: 12,
@@ -166,6 +188,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 12,
     textTransform: 'capitalize',
+  },
+  heart: {
+    fontSize: 26,
   },
   questionMark: {
     fontSize: 48,
@@ -235,14 +260,5 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontStyle: 'italic',
     marginTop: 20,
-  },
-  heartBtn: {
-    position: 'absolute',
-    top: 16,
-    right: 32,
-    zIndex: 10,
-  },
-  heart: {
-    fontSize: 28,
   },
 });
