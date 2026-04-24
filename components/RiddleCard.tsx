@@ -78,14 +78,6 @@ export default function RiddleCard({ riddle, onFavorite, isFavorite }: Props) {
             <View style={[styles.badge, { backgroundColor: accentColor }]}>
               <Text style={styles.badgeText}>{riddle.category}</Text>
             </View>
-            {onFavorite && (
-              <Pressable
-                onPress={(e) => { e.stopPropagation(); onFavorite(); }}
-                hitSlop={12}
-              >
-                <Text style={styles.heart}>{isFavorite ? '❤️' : '🤍'}</Text>
-              </Pressable>
-            )}
             <View style={[styles.badge, { backgroundColor: diffColor }]}>
               <Text style={styles.badgeText}>{riddle.difficulty}</Text>
             </View>

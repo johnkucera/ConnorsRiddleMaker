@@ -33,8 +33,6 @@ export default function HomeScreen() {
     if (canGoBack) setHistoryIndex(i => i - 1);
   }, [canGoBack]);
 
-  const isFirst = historyIndex === 0;
-
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.header}>
@@ -45,12 +43,6 @@ export default function HomeScreen() {
           <Text style={styles.streakLabel}>day streak</Text>
         </View>
       </View>
-
-      {isFirst && (
-        <View style={styles.dailyBadge}>
-          <Text style={styles.dailyText}>⭐ Today's Riddle</Text>
-        </View>
-      )}
 
       <RiddleCard
         key={currentRiddle.id}
@@ -64,12 +56,14 @@ export default function HomeScreen() {
         <Text style={styles.nextBtnText}>Next Riddle 🎲</Text>
       </Pressable>
 
-      {/* Previous button */}
-      {canGoBack && (
-        <Pressable style={styles.prevBtn} onPress={prevRiddle}>
-          <Text style={styles.prevBtnText}>← Previous Riddle</Text>
-        </Pressable>
-      )}
+      {/* Previous button — always rendered to prevent layout jump */}
+      <Pressable
+        style={[styles.prevBtn, !canGoBack && styles.prevBtnHidden]}
+        onPress={prevRiddle}
+        disabled={!canGoBack}
+      >
+        <Text style={styles.prevBtnText}>← Previous Riddle</Text>
+      </Pressable>
 
       <Text style={styles.counter}>{totalCount} riddles loaded</Text>
     </ScrollView>
@@ -98,15 +92,6 @@ const styles = StyleSheet.create({
   streakEmoji: { fontSize: 24 },
   streakNum: { fontSize: 24, fontWeight: '800', color: '#92400E' },
   streakLabel: { fontSize: 10, color: '#92400E', fontWeight: '600' },
-  dailyBadge: {
-    alignSelf: 'center',
-    backgroundColor: '#7C3AED',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    marginVertical: 8,
-  },
-  dailyText: { color: '#FFF', fontWeight: '700', fontSize: 14 },
   nextBtn: {
     alignSelf: 'center',
     backgroundColor: '#7C3AED',
@@ -125,7 +110,10 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     paddingHorizontal: 24,
     paddingVertical: 10,
-    marginTop: 16,
+    marginTop: 14,
+  },
+  prevBtnHidden: {
+    opacity: 0,
   },
   prevBtnText: {
     color: '#9CA3AF',
