@@ -18,7 +18,6 @@ import { categoryColors } from '../constants/Colors';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width - 40;
-const CARD_HEIGHT = 400;
 
 interface Props {
   riddle: Riddle;
@@ -47,16 +46,16 @@ export default function RiddleCard({ riddle, onFavorite, isFavorite }: Props) {
     backfaceVisibility: 'hidden',
   }));
 
-  const handlePress = useCallback(() => {
-    if (!revealed) {
-      flip.value = withSpring(1, { damping: 15, stiffness: 100 });
-      setRevealed(true);
-    } else {
-      flip.value = withSpring(0, { damping: 15, stiffness: 100 });
-      setRevealed(false);
-      setHintsShown(0);
-    }
-  }, [revealed, flip]);
+  const revealAnswer = useCallback(() => {
+    flip.value = withSpring(1, { damping: 15, stiffness: 100 });
+    setRevealed(true);
+  }, [flip]);
+
+  const hideAnswer = useCallback(() => {
+    flip.value = withSpring(0, { damping: 15, stiffness: 100 });
+    setRevealed(false);
+    setHintsShown(0);
+  }, [flip]);
 
   const showHint = useCallback(() => {
     if (hintsShown < riddle.hints.length) {
@@ -71,7 +70,8 @@ export default function RiddleCard({ riddle, onFavorite, isFavorite }: Props) {
 
   return (
     <View style={styles.container}>
-      <Pressable onPress={handlePress}>
+      {/* Card — tap only flips when already revealed (to go back) */}
+      <Pressable onPress={revealed ? hideAnswer : undefined}>
         {/* Front — Question */}
         <Animated.View style={[styles.card, { borderColor: accentColor }, frontStyle]}>
           <View style={styles.topRow}>
@@ -84,42 +84,13 @@ export default function RiddleCard({ riddle, onFavorite, isFavorite }: Props) {
           </View>
           <Text style={styles.questionMark}>❓</Text>
           <Text style={styles.question}>{riddle.question}</Text>
-
-          {/* Hints */}
-          {hintsShown > 0 && (
-            <View style={styles.hintsBox}>
-              {riddle.hints.slice(0, hintsShown).map((h, i) => (
-                <Text key={i} style={styles.hintText}>
-                  💡 {h}
-                </Text>
-              ))}
-            </View>
-          )}
-
-          <View style={styles.bottomRow}>
-            {hintsShown < riddle.hints.length && (
-              <Pressable
-                style={[styles.hintBtn, { borderColor: accentColor }]}
-                onPress={(e) => { e.stopPropagation(); showHint(); }}
-              >
-                <Text style={[styles.hintBtnText, { color: accentColor }]}>
-                  Show Hint {hintsShown + 1}
-                </Text>
-              </Pressable>
-            )}
-            <Text style={styles.tapHint}>Tap to reveal answer</Text>
-          </View>
         </Animated.View>
 
         {/* Back — Answer */}
         <Animated.View style={[styles.card, styles.cardBack, { borderColor: accentColor, backgroundColor: accentColor }, backStyle]}>
           <View style={styles.backTopRow}>
             {onFavorite && (
-              <Pressable
-                onPress={(e) => { e.stopPropagation(); onFavorite(); }}
-                hitSlop={12}
-                style={styles.backHeart}
-              >
+              <Pressable onPress={onFavorite} hitSlop={12} style={styles.backHeart}>
                 <Text style={styles.heart}>{isFavorite ? '❤️' : '🤍'}</Text>
               </Pressable>
             )}
@@ -130,6 +101,40 @@ export default function RiddleCard({ riddle, onFavorite, isFavorite }: Props) {
           <Text style={styles.tapHintBack}>Tap to flip back</Text>
         </Animated.View>
       </Pressable>
+
+      {/* Hints + Reveal — OUTSIDE the card, no flip conflict */}
+      {!revealed && (
+        <View style={styles.controls}>
+          {/* Hint bubbles */}
+          {hintsShown > 0 && (
+            <View style={styles.hintsBox}>
+              {riddle.hints.slice(0, hintsShown).map((h, i) => (
+                <Text key={i} style={styles.hintText}>💡 {h}</Text>
+              ))}
+            </View>
+          )}
+
+          {/* Hint button */}
+          {hintsShown < riddle.hints.length && (
+            <Pressable
+              style={[styles.hintBtn, { borderColor: accentColor }]}
+              onPress={showHint}
+            >
+              <Text style={[styles.hintBtnText, { color: accentColor }]}>
+                💡 Show Hint {hintsShown + 1}
+              </Text>
+            </Pressable>
+          )}
+
+          {/* Reveal answer button */}
+          <Pressable
+            style={[styles.revealBtn, { backgroundColor: accentColor }]}
+            onPress={revealAnswer}
+          >
+            <Text style={styles.revealBtnText}>Reveal Answer</Text>
+          </Pressable>
+        </View>
+      )}
     </View>
   );
 }
@@ -138,12 +143,13 @@ const styles = StyleSheet.create({
   container: { alignItems: 'center', marginVertical: 10 },
   card: {
     width: CARD_WIDTH,
-    minHeight: CARD_HEIGHT,
+    minHeight: 320,
     backgroundColor: '#FFFFFF',
     borderRadius: 24,
     borderWidth: 3,
     padding: 24,
-    justifyContent: 'space-between',
+    justifyContent: 'center',
+    alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
@@ -153,13 +159,12 @@ const styles = StyleSheet.create({
   cardBack: {
     position: 'absolute',
     top: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    alignSelf: 'stretch',
     marginBottom: 12,
   },
   backTopRow: {
@@ -195,38 +200,50 @@ const styles = StyleSheet.create({
     color: '#1E1B4B',
     textAlign: 'center',
     lineHeight: 28,
-    flex: 1,
+  },
+  // Controls area — below the card
+  controls: {
+    width: CARD_WIDTH,
+    alignItems: 'center',
+    marginTop: 16,
+    gap: 12,
   },
   hintsBox: {
     backgroundColor: '#FEF9C3',
-    borderRadius: 12,
-    padding: 12,
-    marginTop: 12,
+    borderRadius: 16,
+    padding: 14,
+    width: '100%',
   },
   hintText: {
-    fontSize: 14,
+    fontSize: 15,
     color: '#92400E',
     marginBottom: 4,
-  },
-  bottomRow: {
-    alignItems: 'center',
-    marginTop: 16,
-    gap: 8,
+    lineHeight: 22,
   },
   hintBtn: {
     borderWidth: 2,
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    borderRadius: 24,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
   },
   hintBtnText: {
     fontWeight: '700',
-    fontSize: 14,
+    fontSize: 15,
   },
-  tapHint: {
-    color: '#9CA3AF',
-    fontSize: 13,
-    fontStyle: 'italic',
+  revealBtn: {
+    borderRadius: 24,
+    paddingHorizontal: 28,
+    paddingVertical: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  revealBtnText: {
+    color: '#FFF',
+    fontWeight: '800',
+    fontSize: 16,
   },
   answerLabel: {
     fontSize: 16,
