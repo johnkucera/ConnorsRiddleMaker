@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getItem, setItem } from './storage';
 
 const STORAGE_KEY = 'favorites';
 
@@ -8,7 +8,7 @@ export function useFavorites() {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEY).then(data => {
+    getItem(STORAGE_KEY).then(data => {
       if (data) setFavorites(JSON.parse(data));
       setLoaded(true);
     });
@@ -16,7 +16,7 @@ export function useFavorites() {
 
   const persist = useCallback((next: string[]) => {
     setFavorites(next);
-    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    setItem(STORAGE_KEY, JSON.stringify(next));
   }, []);
 
   const toggleFavorite = useCallback(

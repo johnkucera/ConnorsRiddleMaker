@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getItem, setItem } from './storage';
 
 const STORAGE_KEY = 'streak';
 
@@ -23,7 +23,7 @@ export function useStreak() {
   const [streak, setStreak] = useState<StreakData>({ current: 0, lastDate: '' });
 
   useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEY).then(data => {
+    getItem(STORAGE_KEY).then(data => {
       if (data) setStreak(JSON.parse(data));
     });
   }, []);
@@ -39,7 +39,7 @@ export function useStreak() {
         : { current: 1, lastDate: today };
 
     setStreak(next);
-    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    setItem(STORAGE_KEY, JSON.stringify(next));
     return next.current;
   }, [streak]);
 
